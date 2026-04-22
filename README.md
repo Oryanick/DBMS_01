@@ -108,7 +108,7 @@ cat sensordata/T01_2026-03-01.csv
 
 > **Screenshot 2:** Take a screenshot showing the output of `ls sensordata/ | head -8` and the contents of one CSV file, and insert it here.
 >
-> `[insert screenshot]`
+> ![Screenshot 2](https://github.com/Oryanick/DBMS_01/blob/master/assets/Screenshot%202.png)`
 
 ### What does the script do, line by line?
 
@@ -198,7 +198,7 @@ echo "Import complete."
 
 > **Screenshot 3:** Take a screenshot showing the successful execution of the import script and the result of the `COUNT(*)` query, and insert it here.
 >
-> `[insert screenshot]`
+> `![Screenshot 3](https://github.com/Oryanick/DBMS_01/blob/master/assets/Screenshot%203.png)``
 
 ---
 
@@ -266,8 +266,8 @@ EOF
 </details>
 
 > **Screenshot 4:** Take a screenshot showing the output of the Task 1 SQLite query (the first and last few rows are sufficient), and insert it here.
->
-> `[insert screenshot]`
+>![Screenshot 4](https://github.com/Oryanick/DBMS_01/blob/master/assets/Screenshot%204.png)``
+> `
 
 ### Questions for Task 1
 
@@ -275,15 +275,15 @@ Answer the following questions in your own words and add your answers directly b
 
 **Question 1.1:** Why is `grep -v "^timestamp"` needed in the shell solution even though the files are already filtered with `grep -h "T02"`? Could this step be omitted? Justify your answer.
 
-> *Your answer:*
+> *Your answer:*  Der grep -v "^timestamp" ist notwendig, weil jede CSV-Datei eine Kopfzeile enthält. Diese Zeile sieht genauso aus wie die Spaltennamen und würde sonst als normaler Messwert übersehen. Nur weil man nach T02 filtert, heißt das nicht, dass die Header verschwinden, der zweite grep entfernt sie deshalb gezielt. Weglassen könnte man ihn nur, wenn man vorher alle Header schon entfernt hat (z. B. beim Erzeugen oder Importieren der Dateien.
 
 **Question 1.2:** The shell solution uses `sensordata/T02_*.csv` as a file pattern, even though `grep -h "T02"` already filters for `T02`. Why is the file pattern still important — and what would happen if you used `sensordata/*.csv` instead?
 
-> *Your answer:*
+> *Your answer:*  Das Dateimuster T02_*.csv ist wichtig, weil nur diese Dateien wirklich zu dem Sensor T02 gehören. Der erste grep filtert zwar nach Inhalt, aber er durchsucht sonst alle Sensoren gleichzeitig. Wenn man stattdessen sensordata/*.csv nehmen würde, müsste der grep viel mehr Daten durchsuchen, und es könnten unnötige oder doppelte Zwischenergebnisse entstehen. Das Dateimuster macht die Lösung also effizienter und klarer.
 
 **Question 1.3:** The SQL solution uses `ORDER BY timestamp` even though `timestamp` is stored as type `TEXT`. Why does chronological sorting still work correctly? Under what condition would it fail?
 
-> *Your answer:*
+> *Your answer:*  Die Sortierung funktioniert trotzdem, weil die Zeitstempel im ISO-Format gespeichert sind (YYYY-MM-DDTHH:MM:SS). Dieses Format ist so aufgebaut, dass Textsortierung automatisch der chronologischen Reihenfolge entspricht. Fehlschlagen würde es, wenn das Datum ZB: im deutschen Format gespeichert wäre (DD.MM.YYYY), weil dann die alphabetische Reihenfolge nicht mehr der zeitlichen Reihenfolge entspricht.
 
 ---
 
@@ -355,22 +355,25 @@ EOF
 
 > **Screenshot 5:** Take a screenshot showing the output of the Task 2 SQLite query and insert it here.
 >
-> `[insert screenshot]`
+> ![Screenshot 5](https://github.com/Oryanick/DBMS_01/blob/master/assets/Screenshot%205.png)
 
 ### Questions for Task 2
 
 **Question 2.1:** The shell solution filters by date using `grep -rh "2026-03"`. What problem could arise if a sensor value happened to contain the string `2026-03` — for example as part of an error note? How does the SQL solution handle this problem?
 
-> *Your answer:*
+> *Your answer:* Die Shell-Lösung sucht einfach nach der Zeichenkette „2026-03“ im gesamten Text. Wenn diese Zeichenkette irgendwo in den Daten vorkommt ( ZB: in einer Fehlermeldung oder einem Textfeld), kann sie fälschlicherweise als gültiger Messwert erkannt werden.
+Die SQL-Lösung ist robuster, da sie strukturierte Daten verwendet und nur die Spalte timestamp auswertet. Dadurch können keine falschen Treffer aus anderen Textbereichen entstehen.
 
 **Question 2.2:** The SQL solution uses `timestamp LIKE '2026-03-%'` for the date filter instead of a proper date function. Name one advantage and one disadvantage of this approach.
 
-> *Your answer:*
+> *Your answer:*  Vorteil: Der Filter mit LIKE '2026-03-%' ist einfach und funktioniert gut bei ISO-Zeitstempeln ohne zusätzliche Datumsfunktionen.
+                  Nachteil: Es ist kein echter Datumsvergleich. Wenn sich das Format des Zeitstempels ändert, funktioniert der Filter nicht mehr korrekt und kann fehlerhafte Ergebnisse liefern.
+
 
 **Question 2.3:** The SQL solution returns results sorted by `ORDER BY value_celsius DESC`. The shell solution does not include this sorting. Extend the shell solution to also sort by temperature in descending order and write your command here.
 
-> *Your answer (extended shell command):*
-
+> *Your answer (extended shell command):*   grep -rh "2026-03" sensordata/ \ | grep -v "^timestamp" \ | awk -F',' '$4 > 20.0 {print $1, $2, $4}' \ | sort -k3 -nr
+PS: In meinem Datensatzt kammen keine Werte über 25 grad C vor, deshalb habe ich 20 grad C benutzt.
 ---
 
 ## Task 3 — Per-sensor statistics: min, max, and average temperature
@@ -456,21 +459,22 @@ EOF
 
 > **Screenshot 6:** Take a screenshot showing the output of the Task 3 SQLite query — the four rows with sensor statistics — and insert it here.
 >
-> `[insert screenshot]`
+> ![Screenshot 6](https://github.com/Oryanick/DBMS_01/blob/master/assets/Screenshot%206.png)
 
 ### Questions for Task 3
 
 **Question 3.1:** The `awk` solution initialises `min=9999` and `max=-9999`. What would happen if all temperature values in the dataset were greater than 9999? How could the initialisation be made more robust?
 
-> *Your answer:*
+> *Your answer:* Wenn alle Werte größer als 9999 wären, würde die Initialisierung (min=9999) dazu führen, dass der tatsächliche minimale Wert nie korrekt erkannt wird, weil die Startwerte falsch gesetzt sind. Robuster wäre es, min und max beim ersten eingelesenen Wert zu initialisieren oder direkt mit dem ersten Datenwert zu starten, statt feste Grenzwerte zu verwenden.
 
 **Question 3.2:** The SQL solution uses `GROUP BY sensor_id`. What would the query return *without* this clause — i.e. if you ran `SELECT sensor_id, MIN(value_celsius), MAX(value_celsius), ROUND(AVG(value_celsius), 1) FROM readings`? Try it and describe the result.
 
-> *Your answer:*
+> *Your answer:* Ohne GROUP BY sensor_id würde die Abfrage nur eine einzige Zeile zurückgeben. Diese Zeile enthält die globalen Minimal, Maximal und Durchschnittswerte über alle Sensoren hinweg. Die Aufteilung nach einzelnen Sensoren würde komplett entfallen, da SQL alle Zeilen als eine gemeinsame Gruppe behandelt. Bei mir als globaler MIN-Wert hatte ich 20.0, als globaler MAX-Wert 22.0 und als globaler Durchschnittlicher Wert 21.0 .
+
 
 **Question 3.3:** Extend the SQL query with an additional column `COUNT(*) AS num_readings` that shows the total number of measurements for each sensor. Write the complete extended query here.
 
-> *Your answer (extended SQL query):*
+> *Your answer (extended SQL query):*  sqlite3 sensors.db "SELECT sensor_id, MIN(value_celsius) AS min_temp, MAX(value_celsius) AS max_temp, ROUND(AVG(value_celsius), 1) AS avg_temp, COUNT(*) AS num_readings FROM readings GROUP BY sensor_id ORDER BY sensor_id;"
 
 ---
 
@@ -481,26 +485,34 @@ After completing all three tasks, answer the following questions:
 **Question A — Writing effort:**
 Which approach was easier to write correctly on the first try? Explain which properties of each language contributed to this.
 
-> *Your answer:*
+> *Your answer:*  Die SQL-Lösung war beim ersten Versuch  ein wenig einfacher  umzusetzen. In SQL beschreibt man direkt das gewünschte Ergebnis, ohne die einzelnen Verarbeitungsschritte selbst festlegen zu müssen. Dadurch ist die Struktur klarer und weniger fehleranfällig.
+
+Die Shell-Lösung ist dagegen länger und besteht aus mehreren miteinander verketteten Befehlen (ZB: grep, awk, sort ). Hier muss man selbst genau festlegen, wie die Daten Schritt für Schritt verarbeitet werden, was schneller zu Fehlern führen könnte.
+
 
 **Question B — Extensibility:**
 What would you need to change in the shell solution if a fifth sensor `T05` were added? What about the SQL solution? Which approach scales better — and why?
 
-> *Your answer:*
+> *Your answer:*  In der Shell-Lösung müsste für einen neuen Sensor T05 der Sensor explizit in die Schleife aufgenommen werden, Dateimuster angepasst werden, wenn neue Dateien hinzukommen.
+
+In der SQL-Lösung ist keine Änderung notwendig, da GROUP BY sensor_id automatisch alle vorhandenen Sensoren berücksichtigt, auch neue wie T05. Daher ist die SQL-Lösung besser erweiterbar, da sie unabhängig von der Anzahl der Sensoren funktioniert und sich automatisch an neue Daten anpasst.
 
 **Question C — Performance:**
 The shell solution reads files from disk on every invocation. A database can cache frequently queried data in memory. What does this mean for performance with 10 000 sensors and multi-year measurement data?
 
-> *Your answer:*
+> *Your answer:*  Bei sehr großen Datenmengen (ZB: 10.000 Sensoren über mehrere Jahre) wird die Shell-Lösung sehr ineffizient, da sie bei jedem Aufruf alle Dateien erneut von der Festplatte einlesen und verarbeiten muss. Das führt zu langen Laufzeiten.
+Eine Datenbank kann solche Daten deutlich effizienter verarbeiten, da sie Indizes verwendet und häufig abgefragte Daten im Arbeitsspeicher zwischenspeichern kann. Dadurch werden Abfragen  schneller und skalieren besser mit wachsender Datenmenge.
 
 **Question D — Declarative vs. imperative:**
 SQL is called a *declarative* language: you describe *what* you want, not *how* to compute it. Bash/awk, by contrast, are *imperative*: you write step by step how the result is to be computed. In which of the three tasks did you feel this difference most clearly? Justify your choice.
 
-> *Your answer:*
+> *Your answer:*  Der Unterschied war am deutlichsten in Aufgabe 3 mit den Statistiken pro Sensor zu erkennen. Die SQL-Lösung beschreibt direkt das gewünschte Ergebnis mit MIN, MAX und AVG sowie GROUP BY, ohne zu erklären, wie die Berechnung intern abläuft.
+Die Shell-Lösung dagegen erfordert eine detaillierte Schritt-für-Schritt Verarbeitung mit Schleifen, Filtern und awk-Logik. Dadurch wird der imperativere Ansatz deutlich sichtbar.
 
 > **Screenshot 7:** Take a final screenshot of your terminal showing the SQLite prompt with a query of your own invention on the `readings` table — one you came up with yourself that goes beyond the tasks above — and insert it here.
 >
-> `[insert screenshot]`
+> ![Screenshot 7](https://github.com/Oryanick/DBMS_01/blob/master/assets/Screenshot%207.png)
+`
 
 ---
 
